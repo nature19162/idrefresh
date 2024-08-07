@@ -1,9 +1,8 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
-const path = require('path');
 const app = express();
-const port = process.env.PORT || 3000;
+const port = 3000;
 
 const ADMIN_USERNAME = 'nature';
 const ADMIN_PASSWORD = 'Wan190203';
@@ -11,7 +10,6 @@ const ADMIN_PASSWORD = 'Wan190203';
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
-// 登录API
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
@@ -21,12 +19,10 @@ app.post('/api/login', (req, res) => {
     }
 });
 
-// 生成随机密码
 function generatePassword() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// 管理API
 app.post('/api/admin', (req, res) => {
     const { accounts } = req.body;
     const password = generatePassword();
@@ -34,7 +30,6 @@ app.post('/api/admin', (req, res) => {
     res.json({ message: '提取码已刷新！', password });
 });
 
-// 获取内容API
 app.get('/api/content', (req, res) => {
     try {
         const data = fs.readFileSync('data.json', 'utf-8');
@@ -44,9 +39,6 @@ app.get('/api/content', (req, res) => {
         res.json({ accounts: [], password: '' });
     }
 });
-
-// 提供静态文件
-app.use(express.static(path.join(__dirname, 'public')));
 
 app.listen(port, () => {
     console.log(`服务器运行在 http://localhost:${port}`);
