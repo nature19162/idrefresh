@@ -1,38 +1,36 @@
-document.getElementById('unlockButton').addEventListener('click', async () => {
-    const passwordInput = document.getElementById('passwordInput').value;
-    const response = await fetch('https://nature19162-qxw9igzna-natures-projects-325c09d3.vercel.app/api/content'); // 使用完整域名
-    const data = await response.json();
-    if (passwordInput === data.password) {
-        document.getElementById('passwordPrompt').style.display = 'none';
-        const contentDiv = document.getElementById('content');
-        contentDiv.style.display = 'block';
-        data.accounts.forEach((account, index) => {
-            const accountDiv = document.createElement('div');
-            accountDiv.classList.add('account');
-            accountDiv.innerHTML = `
-                <div class="content-row">
-                    <span>${index + 1}. 账号: ${account.contentLeft}</span>
-                    <button class="copyButton" data-text="${account.contentLeft}">复制账号</button>
-                </div>
-                <div class="content-row">
-                    <span>密码: ${account.contentRight}</span>
-                    <button class="copyButton" data-text="${account.contentRight}">复制密码</button>
-                </div>
-                <div class="content-row">
-                    <span>说明: ${account.description}</span>
-                </div>`;
-            contentDiv.appendChild(accountDiv);
+document.getElementById('loginForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    
+    try {
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
         });
 
-        document.querySelectorAll('.copyButton').forEach(button => {
-            button.addEventListener('click', () => {
-                const textToCopy = button.getAttribute('data-text');
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    alert('复制成功!');
-                });
-            });
-        });
-    } else {
-        alert('提取码错误!');
+        if (!response.ok) {
+            throw new Error('网络响应错误');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('message').textContent = '登录成功!';
+            document.getElementById('message').style.color = 'green';
+            window.location.href = '/admin.html'; // 登录成功后跳转
+        } else {
+            document.getElementById('message').textContent = data.message;
+            document.getElementById('message').style.color = 'red';
+        }
+        document.getElementById('message').style.display = 'block';
+    } catch (error) {
+        console.error('登录请求失败:', error);
+        document.getElementById('message').textContent = '登录失败，请稍后再试。';
+        document.getElementById('message').style.color = 'red';
+        document.getElementById('message').style.display = 'block';
     }
 });

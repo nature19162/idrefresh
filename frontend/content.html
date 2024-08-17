@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>内容页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 24px;
+            color: #007BFF;
+        }
+        input[type="password"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-top: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #content {
+            display: none;
+            text-align: left;
+        }
+        .account-block {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+        .account-block p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="title">请输入提取码</h1>
+        <input type="password" id="inputPassword" placeholder="找商家获取">
+        <button id="unlockButton">解锁</button>
+        <div id="content">
+            <!-- 动态填充的账号、密码、说明 -->
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('unlockButton').addEventListener('click', async () => {
+            const inputPassword = document.getElementById('inputPassword').value;
+
+            try {
+                const response = await fetch('/api/content');
+                const data = await response.json();
+
+                if (inputPassword === data.password) {
+                    document.getElementById('title').style.display = 'none';
+                    document.getElementById('inputPassword').style.display = 'none';
+                    document.getElementById('unlockButton').style.display = 'none';
+
+                    const contentDiv = document.getElementById('content');
+                    contentDiv.style.display = 'block';
+                    contentDiv.innerHTML = data.accounts.map(account => `
+                        <div class="account-block">
+                            <p><strong>账号:</strong> ${account.contentLeft}</p>
+                            <p><strong>密码:</strong> ${account.contentRight}</p>
+                            <p><strong>说明:</strong> ${account.description}</p>
+                            <button onclick="copyToClipboard('${account.contentLeft}')">复制账号</button>
+                            <button onclick="copyToClipboard('${account.contentRight}')">复制密码</button>
+                        </div>
+                    `).join('');
+                } else {
+                    alert('提取码错误，请重试。');
+                }
+            } catch (error) {
+                console.error('请求失败:', error);
+            }
+        });
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('复制成功！');
+            }, () => {
+                alert('复制失败，请手动复制。');
+            });
+        }
+    </script>
+</body>
+</html>

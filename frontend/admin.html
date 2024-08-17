@@ -3,17 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理面板</title>
-    <link rel="stylesheet" href="style.css">
+    <title>后台管理</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #007BFF;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input[type="text"],
+        input[type="password"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007BFF;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #accountContainer {
+            margin-top: 20px;
+        }
+        .account {
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .account textarea {
+            width: calc(100% - 22px);
+            margin-bottom: 10px;
+        }
+        .form-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .form-row span {
+            width: 30px;
+            text-align: center;
+        }
+        .form-row input[type="checkbox"] {
+            margin-left: 5px;
+        }
+        #message {
+            text-align: center;
+            margin-top: 20px;
+            color: red;
+        }
+        #passwordDisplay {
+            display: none;
+            text-align: center;
+        }
+        #passwordDisplay p {
+            margin: 0;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>管理面板</h1>
+        <h1>后台管理</h1>
         <form id="loginForm">
             <label for="username">用户名:</label>
-            <input type="text" id="username" name="username" required>
+            <input type="text" id="username" required>
             <label for="password">密码:</label>
-            <input type="password" id="password" name="password" required>
+            <input type="password" id="password" required>
             <button type="submit">登录</button>
         </form>
         <form id="adminForm" style="display:none;">
@@ -25,7 +115,7 @@
             <button type="button" id="deleteAccountButton">删除选中账号</button>
         </form>
         <div id="message"></div>
-        <div id="passwordDisplay" style="display:none;">
+        <div id="passwordDisplay">
             <p>生成的提取码: <span id="generatedPassword"></span> <button id="copyPasswordButton">复制提取码</button></p>
         </div>
     </div>
@@ -33,14 +123,18 @@
         let accountCount = 0;
 
         async function loadContent() {
-            const response = await fetch('/api/content');
-            const data = await response.json();
-            if (data.accounts) {
-                data.accounts.forEach((account, index) => {
-                    addAccountFields(account.contentLeft, account.contentRight, account.description, index);
-                });
-                document.getElementById('generatedPassword').textContent = data.password;
-                document.getElementById('passwordDisplay').style.display = 'block';
+            try {
+                const response = await fetch('/api/content');
+                const data = await response.json();
+                if (data.accounts) {
+                    data.accounts.forEach((account, index) => {
+                        addAccountFields(account.contentLeft, account.contentRight, account.description, index);
+                    });
+                    document.getElementById('generatedPassword').textContent = data.password;
+                    document.getElementById('passwordDisplay').style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('message').textContent = '加载内容失败';
             }
         }
 
@@ -53,15 +147,15 @@
                     <span>${index + 1}.</span>
                     <input type="checkbox" class="deleteCheckbox" data-index="${index}">
                     <label for="contentLeft${index}">账号:</label>
-                    <textarea id="contentLeft${index}" name="contentLeft" rows="2" cols="30">${contentLeft}</textarea>
+                    <textarea id="contentLeft${index}" name="contentLeft" rows="2">${contentLeft}</textarea>
                 </div>
                 <div class="form-row">
                     <label for="contentRight${index}">密码:</label>
-                    <textarea id="contentRight${index}" name="contentRight" rows="2" cols="30">${contentRight}</textarea>
+                    <textarea id="contentRight${index}" name="contentRight" rows="2">${contentRight}</textarea>
                 </div>
                 <div class="form-row">
                     <label for="description${index}">说明:</label>
-                    <textarea id="description${index}" name="description" rows="2" cols="30">${description}</textarea>
+                    <textarea id="description${index}" name="description" rows="2">${description}</textarea>
                 </div>`;
             accountContainer.appendChild(accountDiv);
             accountCount++;
@@ -73,7 +167,7 @@
             const checkboxes = document.querySelectorAll('.deleteCheckbox:checked');
             checkboxes.forEach(checkbox => {
                 const index = checkbox.getAttribute('data-index');
-                const accountDiv = document.querySelector(`[data-index="${index}"]`).closest('.account');
+                const accountDiv = document.querySelector(`.deleteCheckbox[data-index="${index}"]`).closest('.account');
                 accountDiv.remove();
             });
         });
@@ -82,6 +176,8 @@
             const password = document.getElementById('generatedPassword').textContent;
             navigator.clipboard.writeText(password).then(() => {
                 alert('提取码已复制');
+            }).catch(() => {
+                alert('复制提取码失败');
             });
         });
 
@@ -90,21 +186,25 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
 
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ username, password }),
-            });
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password }),
+                });
 
-            const data = await response.json();
-            if (data.success) {
-                document.getElementById('loginForm').style.display = 'none';
-                document.getElementById('adminForm').style.display = 'block';
-                loadContent();
-            } else {
-                document.getElementById('message').textContent = data.message;
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('adminForm').style.display = 'block';
+                    loadContent();
+                } else {
+                    document.getElementById('message').textContent = data.message;
+                }
+            } catch (error) {
+                document.getElementById('message').textContent = '登录请求失败';
             }
         });
 
@@ -118,18 +218,22 @@
                 accounts.push({ contentLeft, contentRight, description });
             });
 
-            const response = await fetch('/api/admin', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ accounts }),
-            });
+            try {
+                const response = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ accounts }),
+                });
 
-            const data = await response.json();
-            document.getElementById('message').textContent = '提取码已刷新！';
-            document.getElementById('generatedPassword').textContent = data.password;
-            document.getElementById('passwordDisplay').style.display = 'block';
+                const data = await response.json();
+                document.getElementById('message').textContent = '提取码已刷新！';
+                document.getElementById('generatedPassword').textContent = data.password;
+                document.getElementById('passwordDisplay').style.display = 'block';
+            } catch (error) {
+                document.getElementById('message').textContent = '生成提取码失败';
+            }
         });
     </script>
 </body>
