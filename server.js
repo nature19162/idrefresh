@@ -56,5 +56,5 @@ app.get('/api/content', (req, res) => {
 
 // 启动服务器
 app.listen(port, () => {
-    console.log(`服务器运行在 http://localhost:${port}`);
+    console.log(`服务器运行在 https://localhost:${port}`);
 });
